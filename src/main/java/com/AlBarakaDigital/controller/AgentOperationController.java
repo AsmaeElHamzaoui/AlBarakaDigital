@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+//endpoints pour la gestion des operations par l'agent
 @RestController
 @RequestMapping("/api/agent/operations")
 @RequiredArgsConstructor
