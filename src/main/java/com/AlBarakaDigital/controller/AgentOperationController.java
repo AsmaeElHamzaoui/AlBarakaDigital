@@ -25,6 +25,7 @@ public class AgentOperationController {
         return operationService.approveOperation(id);
     }
 
+    //reject operation
     @PutMapping("/{id}/reject")
     public OperationResponseDTO reject(@PathVariable Long id) {
         return operationService.rejectOperation(id);
