@@ -19,4 +19,11 @@ public class AgentOperationController {
         return operationService.getPendingOperations();
     }
 
+
+    @PutMapping("/{id}/approve")
+    public OperationResponseDTO approve(@PathVariable Long id) {
+        return operationService.approveOperation(id);
+    }
+
+
 }
