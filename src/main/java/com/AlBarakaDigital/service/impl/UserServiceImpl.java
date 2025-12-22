@@ -3,6 +3,7 @@ package com.AlBarakaDigital.service.impl;
 import com.AlBarakaDigital.dto.UserRequestDTO;
 import com.AlBarakaDigital.dto.UserResponseDTO;
 import com.AlBarakaDigital.entity.User;
+import com.AlBarakaDigital.exception.UserNotFoundException;
 import com.AlBarakaDigital.exception.UsernameAlreadyExistsException;
 import com.AlBarakaDigital.mapper.UserMapper;
 import com.AlBarakaDigital.repository.UserRepository;
@@ -40,14 +41,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDTO getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
         return userMapper.toDto(user);
     }
 
     @Override
     public UserResponseDTO getUserByEmail(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
         return userMapper.toDto(user);
     }
 
@@ -62,7 +63,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDTO activateUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
         user.setActive(true);
         return userMapper.toDto(userRepository.save(user));
     }
@@ -70,7 +71,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserResponseDTO deactivateUser(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
         user.setActive(false);
         return userMapper.toDto(userRepository.save(user));
     }
@@ -78,7 +79,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("Utilisateur introuvable");
+            throw new UserNotFoundException("Utilisateur introuvable");
         }
         userRepository.deleteById(id);
     }
