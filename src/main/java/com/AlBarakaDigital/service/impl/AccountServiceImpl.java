@@ -1,5 +1,6 @@
 package com.AlBarakaDigital.service.impl;
 
+import com.AlBarakaDigital.dto.AccountRequestDTO;
 import com.AlBarakaDigital.dto.AccountResponseDTO;
 import com.AlBarakaDigital.entity.Account;
 import com.AlBarakaDigital.entity.User;
@@ -21,6 +22,28 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
 
     @Override
+    public AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO, Long userId) {
+        // Récupérer le user depuis l'id (JWT)
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+
+        // Vérifier si le numéro de compte existe déjà
+        if (accountRepository.existsByAccountNumber(accountRequestDTO.getAccountNumber())) {
+            throw new RuntimeException("Numéro de compte déjà utilisé");
+        }
+
+        // Mapper le DTO vers l'entité
+        Account account = accountMapper.toEntity(accountRequestDTO);
+        account.setOwner(user);
+
+        // Sauvegarder
+        Account savedAccount = accountRepository.save(account);
+
+        // Retourner le DTO de réponse
+        return accountMapper.toDto(savedAccount);
+    }
+
+    @Override
     public AccountResponseDTO getAccountByNumber(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new RuntimeException("Compte introuvable"));
@@ -32,10 +55,9 @@ public class AccountServiceImpl implements AccountService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
 
-        Account account = user.getAccount();
-        if (account == null) {
-            throw new RuntimeException("Aucun compte associé à cet utilisateur");
-        }
+        // Récupérer le compte associé à l'utilisateur
+        Account account = accountRepository.findById(user.getAccount().getId())
+                .orElseThrow(() -> new RuntimeException("Aucun compte associé à cet utilisateur"));
 
         return accountMapper.toDto(account);
     }
@@ -60,6 +82,5 @@ public class AccountServiceImpl implements AccountService {
 
         account.setBalance(account.getBalance().subtract(amount));
         return accountMapper.toDto(accountRepository.save(account));
-
     }
 }
