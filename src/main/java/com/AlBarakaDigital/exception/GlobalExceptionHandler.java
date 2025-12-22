@@ -27,6 +27,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, status);
     }
 
+    // Lorsqu'un email existe déjà
+    @ExceptionHandler(UsernameAlreadyExistsException.class)
+    public ResponseEntity<Object> handleUsernameExists(
+            UsernameAlreadyExistsException ex,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
+    }
 
     // Lorsqu’un compte n’existe pas
     @ExceptionHandler(AccountNotFoundException.class)
@@ -54,4 +62,6 @@ public class GlobalExceptionHandler {
     ) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
     }
+
+
 }
