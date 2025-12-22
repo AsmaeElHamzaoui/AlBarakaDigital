@@ -8,7 +8,6 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface AccountMapper {
 
-    @Mapping(source = "owner.fullName", target = "owner")
     AccountResponseDTO toDto(Account account);
 }
 
