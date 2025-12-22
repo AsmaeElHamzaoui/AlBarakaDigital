@@ -6,6 +6,7 @@ import com.AlBarakaDigital.entity.Account;
 import com.AlBarakaDigital.entity.Operation;
 import com.AlBarakaDigital.enums.OperationStatus;
 import com.AlBarakaDigital.enums.OperationType;
+import com.AlBarakaDigital.exception.AccountNotFoundException;
 import com.AlBarakaDigital.mapper.OperationMapper;
 import com.AlBarakaDigital.repository.AccountRepository;
 import com.AlBarakaDigital.repository.OperationRepository;
@@ -39,7 +40,7 @@ public class OperationServiceImpl implements OperationService {
                 .stream()
                 .filter(a -> a.getOwner().getEmail().equals(clientEmail))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Compte client introuvable"));
+                .orElseThrow(() -> new AccountNotFoundException("Compte client introuvable"));
 
         // Mapper DTO → Entity (sans les accounts pour l’instant)
         Operation operation = operationMapper.toEntity(dto);
@@ -49,7 +50,7 @@ public class OperationServiceImpl implements OperationService {
         if (dto.getType() == OperationType.TRANSFER) {
             Account destination = accountRepository
                     .findByAccountNumber(dto.getDestinationAccountNumber())
-                    .orElseThrow(() -> new RuntimeException("Compte destination introuvable"));
+                    .orElseThrow(() -> new AccountNotFoundException("Compte destination introuvable"));
             operation.setAccountDestination(destination);
         }
 

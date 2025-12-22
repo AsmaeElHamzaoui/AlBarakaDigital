@@ -4,6 +4,8 @@ import com.AlBarakaDigital.dto.AccountRequestDTO;
 import com.AlBarakaDigital.dto.AccountResponseDTO;
 import com.AlBarakaDigital.entity.Account;
 import com.AlBarakaDigital.entity.User;
+import com.AlBarakaDigital.exception.AccountNotFoundException;
+import com.AlBarakaDigital.exception.UserNotFoundException;
 import com.AlBarakaDigital.mapper.AccountMapper;
 import com.AlBarakaDigital.repository.AccountRepository;
 import com.AlBarakaDigital.repository.UserRepository;
@@ -25,7 +27,7 @@ public class AccountServiceImpl implements AccountService {
     public AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO, Long userId) {
         // Récupérer le user depuis l'id (JWT)
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
         // Vérifier si le numéro de compte existe déjà
         if (accountRepository.existsByAccountNumber(accountRequestDTO.getAccountNumber())) {
@@ -46,18 +48,18 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponseDTO getAccountByNumber(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new RuntimeException("Compte introuvable"));
+                .orElseThrow(() -> new AccountNotFoundException("Compte introuvable"));
         return accountMapper.toDto(account);
     }
 
     @Override
     public AccountResponseDTO getAccountByUserId(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("Utilisateur introuvable"));
+                .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
         // Récupérer le compte associé à l'utilisateur
         Account account = accountRepository.findById(user.getAccount().getId())
-                .orElseThrow(() -> new RuntimeException("Aucun compte associé à cet utilisateur"));
+                .orElseThrow(() -> new AccountNotFoundException("Aucun compte associé à cet utilisateur"));
 
         return accountMapper.toDto(account);
     }
@@ -65,7 +67,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponseDTO credit(String accountNumber, BigDecimal amount) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new RuntimeException("Compte introuvable"));
+                .orElseThrow(() -> new AccountNotFoundException("Compte introuvable"));
 
         account.setBalance(account.getBalance().add(amount));
         return accountMapper.toDto(accountRepository.save(account));
@@ -74,7 +76,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     public AccountResponseDTO debit(String accountNumber, BigDecimal amount) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new RuntimeException("Compte introuvable"));
+                .orElseThrow(() -> new AccountNotFoundException("Compte introuvable"));
 
         if (account.getBalance().compareTo(amount) < 0) {
             throw new RuntimeException("Solde insuffisant");
