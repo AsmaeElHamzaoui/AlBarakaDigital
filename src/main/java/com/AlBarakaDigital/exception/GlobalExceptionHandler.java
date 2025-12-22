@@ -27,7 +27,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, status);
     }
 
-    // Lorsqu'un email existe déjà
+    // Lorsqu'un unstilisateur n'existe pas
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<Object> handleUsernameExists(
             UserNotFoundException ex,
@@ -45,10 +45,21 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST, request);
     }
 
+
+
     // Lorsqu’un compte n’existe pas
     @ExceptionHandler(AccountNotFoundException.class)
     public ResponseEntity<Object> handleEventNotFound(
             AccountNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
+    }
+
+    // Lorsqu'une opération n'existe pas
+    @ExceptionHandler(OperationNotFoundException.class)
+    public ResponseEntity<Object> handleUsernameExists(
+            OperationNotFoundException ex,
             HttpServletRequest request
     ) {
         return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
