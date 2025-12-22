@@ -12,17 +12,15 @@ import org.mapstruct.Mapping;
 )
 public interface AccountMapper {
 
-    // =========================
+
     // RequestDTO → Entity
-    // =========================
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "owner", ignore = true)
     @Mapping(target = "outgoingOperations", ignore = true)
     @Mapping(target = "incomingOperations", ignore = true)
     Account toEntity(AccountRequestDTO dto);
 
-    // =========================
+
     // Entity → ResponseDTO
-    // =========================
     AccountResponseDTO toDto(Account account);
 }
