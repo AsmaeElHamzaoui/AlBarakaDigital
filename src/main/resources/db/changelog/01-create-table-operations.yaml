@@ -1,0 +1,60 @@
+databaseChangeLog:
+  - changeSet:
+      id: 03-create-operations
+      author: asmae
+      changes:
+        - createTable:
+            tableName: operation
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+
+              - column:
+                  name: amount
+                  type: NUMERIC(19,2)
+
+              - column:
+                  name: status
+                  type: VARCHAR(50)
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+
+              - column:
+                  name: validated_at
+                  type: TIMESTAMP
+
+              - column:
+                  name: executed_at
+                  type: TIMESTAMP
+
+              - column:
+                  name: account_source_id
+                  type: BIGINT
+
+              - column:
+                  name: account_destination_id
+                  type: BIGINT
+
+        - addForeignKeyConstraint:
+            baseTableName: operation
+            baseColumnNames: account_source_id
+            referencedTableName: account
+            referencedColumnNames: id
+            constraintName: fk_operation_account_source
+
+        - addForeignKeyConstraint:
+            baseTableName: operation
+            baseColumnNames: account_destination_id
+            referencedTableName: account
+            referencedColumnNames: id
+            constraintName: fk_operation_account_destination

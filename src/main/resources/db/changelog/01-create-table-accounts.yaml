@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: 02-create-accounts
+      author: asmae
+      changes:
+        - createTable:
+            tableName: account
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+
+              - column:
+                  name: account_number
+                  type: VARCHAR(100)
+                  constraints:
+                    unique: true
+
+              - column:
+                  name: balance
+                  type: NUMERIC(19,2)
+                  defaultValueNumeric: 0
+
+              - column:
+                  name: owner_id
+                  type: BIGINT
+                  constraints:
+                    unique: true
+
+        - addForeignKeyConstraint:
+            baseTableName: account
+            baseColumnNames: owner_id
+            referencedTableName: users
+            referencedColumnNames: id
+            constraintName: fk_account_user
