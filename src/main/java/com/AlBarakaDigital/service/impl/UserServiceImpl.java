@@ -3,6 +3,7 @@ package com.AlBarakaDigital.service.impl;
 import com.AlBarakaDigital.dto.UserRequestDTO;
 import com.AlBarakaDigital.dto.UserResponseDTO;
 import com.AlBarakaDigital.entity.User;
+import com.AlBarakaDigital.exception.UsernameAlreadyExistsException;
 import com.AlBarakaDigital.mapper.UserMapper;
 import com.AlBarakaDigital.repository.UserRepository;
 import com.AlBarakaDigital.service.UserService;
@@ -25,7 +26,7 @@ public class UserServiceImpl implements UserService {
     public UserResponseDTO createUser(UserRequestDTO dto) {
 
         if (userRepository.existsByEmail(dto.getEmail())) {
-            throw new RuntimeException("Email déjà utilisé");
+            throw new UsernameAlreadyExistsException("Email déjà utilisé");
         }
 
         User user = userMapper.toEntity(dto);

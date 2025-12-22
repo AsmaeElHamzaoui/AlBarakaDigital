@@ -28,6 +28,15 @@ public class GlobalExceptionHandler {
     }
 
     // Lorsqu'un email existe déjà
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<Object> handleUsernameExists(
+            UserNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        return buildErrorResponse(ex.getMessage(), HttpStatus.NOT_FOUND, request);
+    }
+
+    // Lorsqu'un email existe déjà
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<Object> handleUsernameExists(
             UsernameAlreadyExistsException ex,
