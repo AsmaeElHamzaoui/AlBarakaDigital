@@ -7,6 +7,8 @@ import com.AlBarakaDigital.entity.Operation;
 import com.AlBarakaDigital.enums.OperationStatus;
 import com.AlBarakaDigital.enums.OperationType;
 import com.AlBarakaDigital.exception.AccountNotFoundException;
+import com.AlBarakaDigital.exception.OperationDejaTraiteException;
+import com.AlBarakaDigital.exception.OperationNotFoundException;
 import com.AlBarakaDigital.mapper.OperationMapper;
 import com.AlBarakaDigital.repository.AccountRepository;
 import com.AlBarakaDigital.repository.OperationRepository;
@@ -90,10 +92,10 @@ public class OperationServiceImpl implements OperationService {
     @Override
     public OperationResponseDTO approveOperation(Long operationId) {
         Operation operation = operationRepository.findById(operationId)
-                .orElseThrow(() -> new RuntimeException("Opération introuvable"));
+                .orElseThrow(() -> new OperationNotFoundException("Opération introuvable"));
 
         if (operation.getStatus() != OperationStatus.PENDING) {
-            throw new RuntimeException("Opération déjà traitée");
+            throw new OperationDejaTraiteException("Opération déjà traitée");
         }
 
         executeOperation(operation);
@@ -107,7 +109,7 @@ public class OperationServiceImpl implements OperationService {
     @Override
     public OperationResponseDTO rejectOperation(Long operationId) {
         Operation operation = operationRepository.findById(operationId)
-                .orElseThrow(() -> new RuntimeException("Opération introuvable"));
+                .orElseThrow(() -> new OperationNotFoundException("Opération introuvable"));
 
         if (operation.getStatus() != OperationStatus.PENDING) {
             throw new RuntimeException("Opération déjà traitée");
@@ -130,7 +132,7 @@ public class OperationServiceImpl implements OperationService {
 
             case WITHDRAWAL -> {
                 if (source.getBalance().compareTo(amount) < 0) {
-                    throw new RuntimeException("Solde insuffisant");
+                    throw new OperationDejaTraiteException("Solde insuffisant");
                 }
                 source.setBalance(source.getBalance().subtract(amount));
             }
