@@ -25,23 +25,27 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO, Long userId) {
-        // Récupérer le user depuis l'id (JWT)
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
-        // Vérifier si le numéro de compte existe déjà
+        if (!user.isActive()) {
+            throw new RuntimeException("Impossible de créer un compte pour un utilisateur désactivé");
+        }
+
+        if (user.getAccount() != null) {
+            throw new RuntimeException("Cet utilisateur possède déjà un compte bancaire");
+        }
+
         if (accountRepository.existsByAccountNumber(accountRequestDTO.getAccountNumber())) {
             throw new RuntimeException("Numéro de compte déjà utilisé");
         }
 
-        // Mapper le DTO vers l'entité
         Account account = accountMapper.toEntity(accountRequestDTO);
         account.setOwner(user);
 
-        // Sauvegarder
         Account savedAccount = accountRepository.save(account);
 
-        // Retourner le DTO de réponse
         return accountMapper.toDto(savedAccount);
     }
 
