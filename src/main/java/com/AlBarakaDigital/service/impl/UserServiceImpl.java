@@ -3,6 +3,7 @@ package com.AlBarakaDigital.service.impl;
 import com.AlBarakaDigital.dto.UserRequestDTO;
 import com.AlBarakaDigital.dto.UserResponseDTO;
 import com.AlBarakaDigital.entity.User;
+import com.AlBarakaDigital.enums.Role;
 import com.AlBarakaDigital.exception.UserNotFoundException;
 import com.AlBarakaDigital.exception.UsernameAlreadyExistsException;
 import com.AlBarakaDigital.mapper.UserMapper;
@@ -32,6 +33,8 @@ public class UserServiceImpl implements UserService {
 
         User user = userMapper.toEntity(dto);
         user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        //RÔLE PAR DÉFAUT
+        user.setRole(Role.CLIENT);
         user.setActive(true);
 
         User savedUser = userRepository.save(user);

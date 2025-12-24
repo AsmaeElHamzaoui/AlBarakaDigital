@@ -38,6 +38,9 @@ public class User {
     @PrePersist
     void onCreate() {
         this.createdAt = LocalDateTime.now();
+        if (this.role == null) {
+            this.role = Role.CLIENT;
+        }
     }
 }
 

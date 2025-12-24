@@ -19,14 +19,6 @@ public class AdminController {
 
     private final UserService userService;
 
-    // CREATE
-    @PostMapping
-    public ResponseEntity<UserResponseDTO> createUser(
-            @RequestBody UserRequestDTO requestDTO) {
-
-        UserResponseDTO createdUser = userService.createUser(requestDTO);
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-    }
 
     // READ
     @GetMapping("/{id}")
