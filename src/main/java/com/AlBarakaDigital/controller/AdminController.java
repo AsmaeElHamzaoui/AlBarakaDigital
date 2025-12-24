@@ -39,7 +39,16 @@ public class AdminController {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
+    // UPDATE (statut)
+    @PutMapping("/{id}/activate")
+    public ResponseEntity<UserResponseDTO> activateUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.activateUser(id));
+    }
 
+    @PutMapping("/{id}/deactivate")
+    public ResponseEntity<UserResponseDTO> deactivateUser(@PathVariable Long id) {
+        return ResponseEntity.ok(userService.deactivateUser(id));
+    }
 
     // DELETE
     @DeleteMapping("/{id}")
