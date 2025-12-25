@@ -56,5 +56,10 @@ public class OAuth2AuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        // Ce filtre ne s'applique qu'aux endpoints /api/agent/operations/pending
+        String path = request.getRequestURI();
+        return !path.equals("/api/agent/operations/pending");
+    }
 }
