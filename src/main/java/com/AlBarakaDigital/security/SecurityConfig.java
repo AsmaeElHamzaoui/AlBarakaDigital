@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .jwt(jwt -> jwt.decoder(jwtDecoder()))
                 )
 
+                .addFilterBefore(oauth2Filter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
