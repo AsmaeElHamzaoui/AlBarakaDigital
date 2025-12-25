@@ -3,6 +3,7 @@ package com.AlBarakaDigital.controller;
 import com.AlBarakaDigital.dto.OperationResponseDTO;
 import com.AlBarakaDigital.service.OperationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,6 +17,7 @@ public class AgentOperationController {
     private final OperationService operationService;
 
     @GetMapping("/pending")
+    @PreAuthorize("hasAuthority('SCOPE_operations.read')")
     public List<OperationResponseDTO> getPendingOperations() {
         return operationService.getPendingOperations();
     }
