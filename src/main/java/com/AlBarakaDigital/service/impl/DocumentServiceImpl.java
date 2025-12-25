@@ -7,11 +7,14 @@ import com.AlBarakaDigital.repository.DocumentRepository;
 import com.AlBarakaDigital.repository.OperationRepository;
 import com.AlBarakaDigital.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,6 +70,34 @@ public class DocumentServiceImpl implements DocumentService {
 
         } catch (IOException e) {
             throw new RuntimeException("Erreur lors de l’upload du fichier");
+        }
+    }
+
+
+    // ===================== DOWNLOAD (AGENT) =====================
+    @Override
+    public Resource downloadDocument(Long operationId) {
+
+        Operation operation = operationRepository.findById(operationId)
+                .orElseThrow(() -> new RuntimeException("Operation introuvable"));
+
+        Document document = operation.getDocument();
+        if (document == null) {
+            throw new RuntimeException("Aucun justificatif pour cette opération");
+        }
+
+        try {
+            Path filePath = Paths.get(document.getStoragePath());
+            Resource resource = new UrlResource(filePath.toUri());
+
+            if (!resource.exists()) {
+                throw new RuntimeException("Fichier introuvable sur le disque");
+            }
+
+            return resource;
+
+        } catch (MalformedURLException e) {
+            throw new RuntimeException("Erreur lors du téléchargement");
         }
     }
 }
