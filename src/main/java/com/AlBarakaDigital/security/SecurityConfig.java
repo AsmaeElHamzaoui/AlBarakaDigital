@@ -38,6 +38,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
 
+                        // Endpoint sécurisé par OAuth2
+                        .requestMatchers("/api/agent/operations/pending")
+                        .hasAuthority("SCOPE_operations.read")
+
                         .requestMatchers("/api/client/**")
                         .hasRole("CLIENT")
 
