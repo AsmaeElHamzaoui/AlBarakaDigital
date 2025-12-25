@@ -23,10 +23,10 @@ public class AgentDocumentController {
         Resource resource = documentService.downloadDocument(operationId);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
+                .contentType(MediaType.APPLICATION_PDF) // ou MediaType.APPLICATION_OCTET_STREAM
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"justificatif.pdf\""
+                        "attachment; filename=\"" + resource.getFilename() + "\""
                 )
                 .body(resource);
     }
