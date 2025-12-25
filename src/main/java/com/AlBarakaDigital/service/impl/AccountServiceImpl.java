@@ -24,9 +24,9 @@ public class AccountServiceImpl implements AccountService {
     private final AccountMapper accountMapper;
 
     @Override
-    public AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO, Long userId) {
-
-        User user = userRepository.findById(userId)
+    public AccountResponseDTO createAccountForAuthenticatedUser(AccountRequestDTO accountRequestDTO, String userEmail) {
+        // Trouver l'utilisateur par email (qui vient du JWT)
+        User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new UserNotFoundException("Utilisateur introuvable"));
 
         if (!user.isActive()) {
@@ -34,7 +34,7 @@ public class AccountServiceImpl implements AccountService {
         }
 
         if (user.getAccount() != null) {
-            throw new RuntimeException("Cet utilisateur possède déjà un compte bancaire");
+            throw new RuntimeException("Vous possédez déjà un compte bancaire");
         }
 
         if (accountRepository.existsByAccountNumber(accountRequestDTO.getAccountNumber())) {

@@ -20,5 +20,5 @@ public interface AccountService {
     AccountResponseDTO debit(String accountNumber, BigDecimal amount);
 
     // Créer un compte (request DTO + utilisateur authentifié)
-    AccountResponseDTO createAccount(AccountRequestDTO accountRequestDTO, Long userId);
+    AccountResponseDTO createAccountForAuthenticatedUser(AccountRequestDTO accountRequestDTO, String userEmail);
 }
