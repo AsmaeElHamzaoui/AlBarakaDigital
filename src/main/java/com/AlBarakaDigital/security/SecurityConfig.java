@@ -1,6 +1,7 @@
 package com.AlBarakaDigital.security;
 
 import com.AlBarakaDigital.security.jwt.JwtAuthenticationFilter;
+import com.AlBarakaDigital.security.oauth2.OAuth2AuthenticationFilter;
 import com.AlBarakaDigital.security.web.JwtAccessDeniedHandler;
 import com.AlBarakaDigital.security.web.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final OAuth2AuthenticationFilter oauth2Filter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
