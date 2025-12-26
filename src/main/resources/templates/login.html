@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
     <title>Connexion</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
 
@@ -28,29 +28,45 @@
         const email = document.getElementById("email").value;
         const password = document.getElementById("password").value;
 
-        const response = await fetch("/auth/login", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ email, password })
-        });
+        try {
+            const response = await fetch("/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
 
-        if (!response.ok) {
-            document.getElementById("error").innerText = "Identifiants invalides";
-            return;
-        }
+            if (!response.ok) {
+                const errorText = await response.text();
+                document.getElementById("error").innerText = errorText || "Identifiants invalides";
+                return;
+            }
 
-        const data = await response.json();
-        localStorage.setItem("token", data.token);
+            const data = await response.json();
 
-        const payload = JSON.parse(atob(data.token.split('.')[1]));
-        const role = payload.role;
+            // Stockage du token JWT
+            localStorage.setItem("token", data.accessToken);
 
-        if (role === "ADMIN") {
-            window.location.href = "/dashboard/admin";
-        } else if (role === "CLIENT") {
-            window.location.href = "/dashboard/client";
-        } else if (role.includes("AGENT")) {
-            window.location.href = "/dashboard/agent";
+            // Récupération du rôle depuis la réponse backend
+            let role = data.role;
+
+            // Si le rôle n'est pas renvoyé par le backend, on peut le décoder du token
+            if (!role) {
+                const payload = JSON.parse(atob(data.accessToken.split('.')[1]));
+                role = payload.role || payload.roles; // selon comment tu génères le JWT
+            }
+
+            // Redirection selon le rôle
+            if (role === "ADMIN") {
+                window.location.href = "/dashboard/admin";
+            } else if (role === "CLIENT") {
+                window.location.href = "/dashboard/client";
+            } else if (role.includes("AGENT")) {
+                window.location.href = "/dashboard/agent";
+            }
+
+        } catch (err) {
+            console.error(err);
+            document.getElementById("error").innerText = "Erreur lors de la connexion";
         }
     }
 </script>
