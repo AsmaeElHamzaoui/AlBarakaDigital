@@ -17,7 +17,7 @@ public class AgentOperationController {
     private final OperationService operationService;
 
     @GetMapping("/pending")
-    @PreAuthorize("hasAuthority('SCOPE_operations.read')")
+    @PreAuthorize("hasRole('app_AGENT_BANCAIRE')")
     public List<OperationResponseDTO> getPendingOperations() {
         return operationService.getPendingOperations();
     }
