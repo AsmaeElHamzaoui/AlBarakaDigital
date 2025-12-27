@@ -1,0 +1,57 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-albaraka
+    environment:
+      POSTGRES_DB: albarakadigital_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - albaraka-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak-albaraka
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8180:8080"
+    networks:
+      - albaraka-network
+
+  albaraka-app:
+    build: .
+    container_name: albaraka-backend
+    depends_on:
+      - postgres
+      - keycloak
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: albarakadigital_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: 1234
+
+      JWT_SECRET: 7K9mP2nQ5rT8vW1xZ4bC6eF9hJ3kM7oR5sU8wY2aD5gH9jL3nP6qT9vX2zA5cE8f
+
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/SpringSecurityKeycloakRealm
+    networks:
+      - albaraka-network
+
+volumes:
+  postgres_data:
+
+networks:
+  albaraka-network:
+    driver: bridge
