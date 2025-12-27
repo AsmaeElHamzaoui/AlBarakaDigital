@@ -5,6 +5,7 @@ import com.AlBarakaDigital.security.web.JwtAccessDeniedHandler;
 import com.AlBarakaDigital.security.web.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.*;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -31,25 +32,47 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
 
+    // Configuration pour OAuth2 (uniquement pour /api/agent/operations/pending)
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
+    @Order(1)
+    public SecurityFilterChain oauth2FilterChain(HttpSecurity http) throws Exception {
         http
+                .securityMatcher("/api/agent/operations/pending")
                 .csrf(csrf -> csrf.disable())
-                .sessionManagement(sm ->
-                        sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+                        .accessDeniedHandler(new JwtAccessDeniedHandler())
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/agent/operations/pending")
+                        .hasAnyAuthority("ROLE_app_AGENT_BANCAIRE", "ROLE_AGENT_BANCAIRE")
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                );
+
+        return http.build();
+    }
+
+    // Configuration pour JWT (pour tous les autres endpoints)
+    @Bean
+    @Order(2)
+    public SecurityFilterChain jwtFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/api/**", "/auth/**")
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                         .accessDeniedHandler(new JwtAccessDeniedHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/api/agent/operations/**")
-                        .hasAnyAuthority("ROLE_app_AGENT_BANCAIRE", "ROLE_AGENT_BANCAIRE")
+                        .requestMatchers("/api/client/**").hasAnyRole("CLIENT")
+                        .requestMatchers("/api/agent/**").hasAnyRole("AGENT_BANCAIRE", "app_AGENT_BANCAIRE")
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN")
                         .anyRequest().authenticated()
-                )
-                .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
@@ -62,7 +85,7 @@ public class SecurityConfig {
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Set<GrantedAuthority> authorities = new HashSet<>();
 
-            // Extraire les scopes
+            // Extraire les scopes pour OAuth2
             Map<String, Object> claims = jwt.getClaims();
             if (claims.containsKey("scope")) {
                 String scope = (String) claims.get("scope");
