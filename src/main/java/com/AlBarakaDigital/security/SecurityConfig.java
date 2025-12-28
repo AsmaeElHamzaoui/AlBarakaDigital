@@ -37,7 +37,7 @@ public class SecurityConfig {
     @Order(1)
     public SecurityFilterChain oauth2FilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatcher("/api/agent/operations/pending")
+                .securityMatcher("/api/agent/operations/oauth2/pending")
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
@@ -45,7 +45,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(new JwtAccessDeniedHandler())
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/agent/operations/pending")
+                        .requestMatchers("/api/agent/operations/oauth2/pending")
                         .hasAuthority("ROLE_AGENT_BANCAIRE") // Simplified
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
