@@ -46,7 +46,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/agent/operations/pending")
-                        .hasAnyAuthority("ROLE_app_AGENT_BANCAIRE", "ROLE_AGENT_BANCAIRE")
+                        .hasAuthority("ROLE_AGENT_BANCAIRE") // Simplified
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
@@ -79,34 +79,31 @@ public class SecurityConfig {
         return http.build();
     }
 
+
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
         converter.setJwtGrantedAuthoritiesConverter(jwt -> {
             Set<GrantedAuthority> authorities = new HashSet<>();
 
-            // Extraire les scopes pour OAuth2
-            Map<String, Object> claims = jwt.getClaims();
-            if (claims.containsKey("scope")) {
-                String scope = (String) claims.get("scope");
-                Arrays.stream(scope.split(" "))
-                        .map(scopeStr -> new SimpleGrantedAuthority("SCOPE_" + scopeStr))
-                        .forEach(authorities::add);
-            }
+            // Extraire les scopes OAuth2
+            String scopes = (String) jwt.getClaims().getOrDefault("scope", "");
+            Arrays.stream(scopes.split(" "))
+                    .map(s -> new SimpleGrantedAuthority("SCOPE_" + s))
+                    .forEach(authorities::add);
 
-            // Extraire les rôles de Keycloak
-            if (claims.containsKey("realm_access")) {
-                Map<String, Object> realmAccess = (Map<String, Object>) claims.get("realm_access");
-                if (realmAccess.containsKey("roles")) {
-                    List<String> roles = (List<String>) realmAccess.get("roles");
-                    roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
-                            .forEach(authorities::add);
-                }
+            // Extraire les rôles Keycloak
+            Map<String, Object> realmAccess = (Map<String, Object>) jwt.getClaims().get("realm_access");
+            if (realmAccess != null && realmAccess.containsKey("roles")) {
+                List<String> roles = (List<String>) realmAccess.get("roles");
+                roles.stream()
+                        .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                        .forEach(authorities::add);
             }
 
             return authorities;
         });
+
         return converter;
     }
 
