@@ -89,4 +89,14 @@ public class AccountServiceImpl implements AccountService {
         account.setBalance(account.getBalance().subtract(amount));
         return accountMapper.toDto(accountRepository.save(account));
     }
+
+    @Override
+    public AccountResponseDTO getAccountByClientEmail(String email) {
+        Account account = accountRepository
+                .findByOwner_Email(email)
+                .orElseThrow(() -> new AccountNotFoundException("Aucun compte"));
+
+        return accountMapper.toDto(account);
+    }
+
 }

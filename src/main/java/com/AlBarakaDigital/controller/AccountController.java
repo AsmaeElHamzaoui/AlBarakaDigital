@@ -30,4 +30,11 @@ public class AccountController {
         AccountResponseDTO response = accountService.createAccountForAuthenticatedUser(requestDTO, email);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<AccountResponseDTO> getMyAccount(Authentication authentication) {
+        String email = authentication.getName();
+        return ResponseEntity.ok(accountService.getAccountByClientEmail(email));
+    }
+
 }
