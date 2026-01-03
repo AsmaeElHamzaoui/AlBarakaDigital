@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Agent Dashboard</title>
+</head>
+<body>
+
+<h2>Dashboard Agent</h2>
+
+<button onclick="loadPending()">Opérations en attente</button>
+
+<ul id="pending"></ul>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    async function loadPending() {
+        const res = await fetch("/api/agent/operations/pending", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const data = await res.json();
+        document.getElementById("pending").innerHTML =
+            data.map(op => `
+                <li>
+                    ${op.amount}
+                    <button onclick="approve(${op.id})">✔</button>
+                    <button onclick="reject(${op.id})">✖</button>
+                </li>
+            `).join("");
+    }
+
+    async function approve(id) {
+        await fetch(`/api/agent/operations/${id}/approve`, {
+            method: "PUT",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        loadPending();
+    }
+
+    async function reject(id) {
+        await fetch(`/api/agent/operations/${id}/reject`, {
+            method: "PUT",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        loadPending();
+    }
+</script>
+
+</body>
+</html>

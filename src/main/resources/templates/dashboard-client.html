@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Client Dashboard</title>
+</head>
+<body>
+
+<h2>Dashboard Client</h2>
+
+<button onclick="loadOperations()">Mes opérations</button>
+
+<ul id="ops"></ul>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    async function loadOperations() {
+        const res = await fetch("/api/client/operations", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+
+        const data = await res.json();
+        document.getElementById("ops").innerHTML =
+            data.map(op => `<li>${op.type} - ${op.amount}</li>`).join("");
+    }
+</script>
+
+</body>
+</html>

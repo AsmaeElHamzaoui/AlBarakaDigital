@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #0f766e; color: white; }
+        button { margin: 2px; padding: 5px 10px; cursor: pointer; }
+        .danger { background: #dc2626; color: white; }
+        .success { background: #16a34a; color: white; }
+        .warning { background: #ca8a04; color: white; }
+        .info { background: #2563eb; color: white; }
+
+        .form-box {
+            margin-top: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            width: 400px;
+        }
+
+        input, select {
+            width: 100%;
+            margin-bottom: 10px;
+            padding: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Dashboard Admin – Gestion des utilisateurs</h2>
+
+<!-- ========================
+     CREATE USER
+========================= -->
+<div class="form-box">
+    <h3>➕ Créer utilisateur</h3>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Mot de passe">
+    <select id="role">
+        <option value="CLIENT">CLIENT</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="AGENT_BANCAIRE">AGENT BANCAIRE</option>
+    </select>
+    <button class="success" onclick="createUser()">Créer</button>
+    <p id="msg"></p>
+</div>
+
+<!-- ========================
+     UPDATE USER
+========================= -->
+<div class="form-box" id="editBox" style="display:none">
+    <h3>✏️ Modifier utilisateur</h3>
+    <input type="hidden" id="editId">
+    <input id="editEmail" placeholder="Email">
+    <input id="editPassword" type="password" placeholder="Nouveau mot de passe">
+    <select id="editRole">
+        <option value="CLIENT">CLIENT</option>
+        <option value="ADMIN">ADMIN</option>
+        <option value="AGENT_BANCAIRE">AGENT BANCAIRE</option>
+    </select>
+    <button class="info" onclick="updateUser()">Enregistrer</button>
+    <button onclick="cancelEdit()">Annuler</button>
+</div>
+
+<button onclick="loadUsers()">🔄 Rafraîchir</button>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Statut</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody id="users"></tbody>
+</table>
+
+<script>
+    const token = localStorage.getItem("token");
+
+    /* ========================
+       READ
+    ========================= */
+    async function loadUsers() {
+        const res = await fetch("/api/admin/users", {
+            headers: { "Authorization": "Bearer " + token }
+        });
+        const users = await res.json();
+
+        document.getElementById("users").innerHTML = users.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.email}</td>
+                <td>${u.role}</td>
+                <td>${u.active ? "🟢 Actif" : "🔴 Désactivé"}</td>
+                <td>
+                    <button class="info" onclick='editUser(${JSON.stringify(u)})'>Modifier</button>
+                    ${u.active
+                        ? `<button class="warning" onclick="deactivate(${u.id})">Désactiver</button>`
+                        : `<button class="success" onclick="activate(${u.id})">Activer</button>`
+                    }
+                    <button class="danger" onclick="deleteUser(${u.id})">Supprimer</button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    /* ========================
+       CREATE
+    ========================= */
+    async function createUser() {
+        const email = email.value;
+        const password = password.value;
+        const role = role.value;
+
+        await fetch("/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({ email, password, role })
+        });
+
+        loadUsers();
+    }
+
+    /* ========================
+       UPDATE
+    ========================= */
+    function editUser(user) {
+        editBox.style.display = "block";
+        editId.value = user.id;
+        editEmail.value = user.email;
+        editRole.value = user.role;
+    }
+
+    async function updateUser() {
+        const id = editId.value;
+
+        await fetch(`/api/admin/users/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": "Bearer " + token
+            },
+            body: JSON.stringify({
+                email: editEmail.value,
+                password: editPassword.value,
+                role: editRole.value
+            })
+        });
+
+        cancelEdit();
+        loadUsers();
+    }
+
+    function cancelEdit() {
+        editBox.style.display = "none";
+        editPassword.value = "";
+    }
+
+    /* ========================
+       STATUS / DELETE
+    ========================= */
+    async function activate(id) {
+        await fetch(`/api/admin/users/${id}/activate`, {
+            method: "PUT",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        loadUsers();
+    }
+
+    async function deactivate(id) {
+        await fetch(`/api/admin/users/${id}/deactivate`, {
+            method: "PUT",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        loadUsers();
+    }
+
+    async function deleteUser(id) {
+        if (!confirm("Confirmer la suppression ?")) return;
+
+        await fetch(`/api/admin/users/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": "Bearer " + token }
+        });
+        loadUsers();
+    }
+
+    loadUsers();
+</script>
+
+</body>
+</html>
