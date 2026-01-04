@@ -16,6 +16,12 @@ public class AgentOperationController {
 
     private final OperationService operationService;
 
+    @GetMapping("/oauth2/pending")
+    @PreAuthorize("hasRole('AGENT_BANCAIRE')")
+    public List<OperationResponseDTO> getPendingOperationsOAuth2() {
+        return operationService.getPendingOperations();
+    }
+
     @GetMapping("/pending")
     @PreAuthorize("hasRole('AGENT_BANCAIRE')")
     public List<OperationResponseDTO> getPendingOperations() {

@@ -3,98 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <title>Dashboard Agent</title>
+
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        h2 { color: #333; }
-        ul { list-style: none; padding: 0; }
-        li { padding: 10px; border-bottom: 1px solid #ddd; display: flex; align-items: center; gap: 10px; }
-        button { padding: 5px 10px; cursor: pointer; }
-        .approved { color: green; font-weight: bold; }
-        .rejected { color: red; font-weight: bold; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f5f6fa;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #2f3640;
+        }
+
+        button {
+            padding: 6px 12px;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .btn-primary {
+            background: #273c75;
+            color: white;
+        }
+
+        .btn-success {
+            background: #44bd32;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e84118;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #7f8fa6;
+            color: white;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin-top: 20px;
+        }
+
+        li {
+            background: white;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info {
+            flex: 1;
+        }
+
+        .actions button {
+            margin-left: 6px;
+        }
+
+        .approved {
+            color: green;
+            font-weight: bold;
+        }
+
+        .rejected {
+            color: red;
+            font-weight: bold;
+        }
+
+        .logout {
+            float: right;
+        }
     </style>
 </head>
 <body>
 
-<h2>Dashboard Agent</h2>
+<h2>
+    Dashboard Agent
+    <button class="btn-secondary logout" onclick="logout()">Déconnexion</button>
+</h2>
 
-<!-- Login Section -->
-<div id="login-section">
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Mot de passe" />
-    <button onclick="login()">Se connecter</button>
-</div>
+<button class="btn-primary" onclick="loadPending()">🔄 Charger les opérations en attente</button>
 
-<!-- Dashboard Section -->
-<div id="dashboard" style="display:none;">
-    <button onclick="loadPending()">Voir les opérations en attente</button>
-    <ul id="pending"></ul>
-</div>
+<ul id="pending"></ul>
 
 <script>
-    let jwtToken = null;       // Token JWT personnalisé
-    let oauth2Token = null;    // Token Keycloak OAuth2
+    // ================================
+    // Auth JWT
+    // ================================
+    const jwtToken = localStorage.getItem("token");
 
-    async function login() {
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-
-    try {
-        // --- Essayer JWT ---
-        let dataJwt = null;
-        try {
-            const resJwt = await fetch("/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
-            });
-            if (resJwt.ok) {
-                dataJwt = await resJwt.json();
-                jwtToken = dataJwt.accessToken || dataJwt.token;
-                localStorage.setItem("token", jwtToken);
-            } else {
-                console.log("Login JWT échoué, on essaie OAuth2");
-            }
-        } catch (err) {
-            console.log("Login JWT échoué", err);
-        }
-
-        // --- Essayer OAuth2 seulement si JWT échoue ---
-        if (!jwtToken) {
-            const resOauth2 = await fetch("/auth/login/oauth2", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, password })
-            });
-
-            if (!resOauth2.ok) throw new Error("Login OAuth2 échoué");
-
-            const dataOauth2 = await resOauth2.json();
-            oauth2Token = dataOauth2.accessToken || dataOauth2.token;
-            localStorage.setItem("oauth2_token", oauth2Token);
-        }
-
-        // Afficher le dashboard
-        document.getElementById("login-section").style.display = "none";
-        document.getElementById("dashboard").style.display = "block";
-        alert("Connexion réussie !");
-
-    } catch (err) {
-        console.error(err);
-        alert(err.message);
+    if (!jwtToken) {
+        window.location.href = "/login.html";
     }
-}
 
+    function logout() {
+        localStorage.removeItem("token");
+        window.location.href = "/login.html";
+    }
 
-    // --- Chargement des opérations pending via OAuth2 ---
+    // ================================
+    // Charger opérations pending (JWT)
+    // ================================
     async function loadPending() {
         try {
-            if (!oauth2Token) throw new Error("Token OAuth2 manquant");
-
             const res = await fetch("/api/agent/operations/pending", {
-                headers: { "Authorization": "Bearer " + oauth2Token }
+                headers: {
+                    "Authorization": "Bearer " + jwtToken
+                }
             });
 
-            if (!res.ok) throw new Error("Impossible de charger les opérations pending");
+            if (!res.ok) {
+                if (res.status === 401 || res.status === 403) {
+                    logout();
+                }
+                throw new Error("Erreur lors du chargement des opérations");
+            }
 
             const data = await res.json();
             const list = document.getElementById("pending");
@@ -106,87 +136,97 @@
 
             list.innerHTML = data.map(op => `
                 <li id="op-${op.id}">
-                    Montant : ${op.amount} DH |
-                    Type : ${op.type} |
-                    Client : ${op.clientName} |
-                    <button onclick="approve(${op.id})">✔ Approve</button>
-                    <button onclick="reject(${op.id})">✖ Reject</button>
-                    <button onclick="downloadDocument(${op.id})">📄 Télécharger Doc</button>
-                    <span id="status-${op.id}"></span>
+                    <div class="info">
+                        <strong>Client :</strong> ${op.clientName}<br>
+                        <strong>Type :</strong> ${op.type}<br>
+                        <strong>Montant :</strong> ${op.amount} DH
+                        <div id="status-${op.id}"></div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-success" onclick="approve(${op.id})">✔</button>
+                        <button class="btn-danger" onclick="reject(${op.id})">✖</button>
+                        <button class="btn-secondary" onclick="downloadDocument(${op.id})">📄</button>
+                    </div>
                 </li>
             `).join("");
 
         } catch (err) {
-            console.error(err);
             alert(err.message);
         }
     }
 
-    // --- Approve operation via JWT ---
+    // ================================
+    // Approve (JWT)
+    // ================================
     async function approve(id) {
         try {
-            if (!jwtToken) throw new Error("Token JWT manquant");
-
             const res = await fetch(`/api/agent/operations/${id}/approve`, {
                 method: "PUT",
-                headers: { "Authorization": "Bearer " + jwtToken }
+                headers: {
+                    "Authorization": "Bearer " + jwtToken
+                }
             });
 
-            if (!res.ok) throw new Error("Impossible d'approuver l'opération");
+            if (!res.ok) throw new Error("Impossible d'approuver");
 
-            document.getElementById(`status-${id}`).innerText = "Approuvée";
-            document.getElementById(`status-${id}`).className = "approved";
+            const status = document.getElementById(`status-${id}`);
+            status.textContent = "✔ Approuvée";
+            status.className = "approved";
 
         } catch (err) {
-            console.error(err);
             alert(err.message);
         }
     }
 
-    // --- Reject operation via JWT ---
+    // ================================
+    // Reject (JWT)
+    // ================================
     async function reject(id) {
         try {
-            if (!jwtToken) throw new Error("Token JWT manquant");
-
             const res = await fetch(`/api/agent/operations/${id}/reject`, {
                 method: "PUT",
-                headers: { "Authorization": "Bearer " + jwtToken }
+                headers: {
+                    "Authorization": "Bearer " + jwtToken
+                }
             });
 
-            if (!res.ok) throw new Error("Impossible de rejeter l'opération");
+            if (!res.ok) throw new Error("Impossible de rejeter");
 
-            document.getElementById(`status-${id}`).innerText = "Rejetée";
-            document.getElementById(`status-${id}`).className = "rejected";
+            const status = document.getElementById(`status-${id}`);
+            status.textContent = "✖ Rejetée";
+            status.className = "rejected";
 
         } catch (err) {
-            console.error(err);
             alert(err.message);
         }
     }
 
-    // --- Télécharger document via JWT ---
+    // ================================
+    // Télécharger document (JWT)
+    // ================================
     async function downloadDocument(id) {
         try {
-            if (!jwtToken) throw new Error("Token JWT manquant");
-
             const res = await fetch(`/api/agent/operations/${id}/document`, {
-                headers: { "Authorization": "Bearer " + jwtToken }
+                headers: {
+                    "Authorization": "Bearer " + jwtToken
+                }
             });
 
             if (!res.ok) throw new Error("Document introuvable");
 
             const blob = await res.blob();
             const url = window.URL.createObjectURL(blob);
+
             const a = document.createElement("a");
             a.href = url;
-            a.download = `document_op_${id}.pdf`;
+            a.download = `document_operation_${id}.pdf`;
             document.body.appendChild(a);
             a.click();
             a.remove();
+
             window.URL.revokeObjectURL(url);
 
         } catch (err) {
-            console.error(err);
             alert(err.message);
         }
     }
