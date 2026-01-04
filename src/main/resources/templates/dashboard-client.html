@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Client Dashboard</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        .box { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; width: 400px; border-radius: 8px; }
+        input, select, button { width: 100%; margin-bottom: 10px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        ul { padding-left: 20px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+
+<h2>Dashboard Client</h2>
+
+<!-- COMPTE BANCAIRE -->
+<div id="accountBox" class="box" style="display:none">
+    <h3>➕ Créer mon compte bancaire</h3>
+    <input id="accountNumber" placeholder="Numéro de compte">
+    <input id="balance" type="number" placeholder="Solde initial">
+    <button onclick="createAccount()">Créer le compte</button>
+    <p id="accountMsg"></p>
+</div>
+
+<div id="accountInfo" class="box" style="display:none">
+    <h3>💳 Mon compte</h3>
+    <p><b>Numéro :</b> <span id="accNum"></span></p>
+    <p><b>Solde :</b> <span id="accBalance"></span> MAD</p>
+    <button onclick="refreshAccount()">🔄 Actualiser le solde</button>
+</div>
+
+<!-- OPÉRATIONS -->
+<div id="operationBox" class="box" style="display:none">
+    <h3>➕ Nouvelle opération</h3>
+
+    <select id="type" onchange="toggleDestination()">
+        <option value="DEPOSIT">Dépôt</option>
+        <option value="WITHDRAWAL">Retrait</option>
+        <option value="TRANSFER">Virement</option>
+    </select>
+
+    <input id="amount" type="number" placeholder="Montant">
+
+    <input id="destAccount" placeholder="Compte destination" style="display:none">
+
+    <button onclick="createOperation()">Valider</button>
+    <p id="opMsg"></p>
+</div>
+
+<button onclick="loadOperations()">📄 Mes opérations</button>
+<ul id="ops"></ul>
+
+<script>
+    const token = localStorage.getItem("token") || "demo-token";
+
+    /* CHECK ACCOUNT */
+    async function checkAccount() {
+        try {
+            const res = await fetch("/api/client/accounts/me", {
+                headers: { Authorization: "Bearer " + token }
+            });
+
+            if (res.ok) {
+                const acc = await res.json();
+                document.getElementById("accountInfo").style.display = "block";
+                document.getElementById("operationBox").style.display = "block";
+                document.getElementById("accNum").innerText = acc.accountNumber;
+                document.getElementById("accBalance").innerText = acc.balance;
+            } else {
+                document.getElementById("accountBox").style.display = "block";
+            }
+        } catch (err) {
+            console.error("Erreur:", err);
+        }
+    }
+
+    /* REFRESH ACCOUNT */
+    async function refreshAccount() {
+        await checkAccount();
+    }
+
+    /* CREATE ACCOUNT */
+    async function createAccount() {
+        try {
+            const res = await fetch("/api/client/accounts", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token
+                },
+                body: JSON.stringify({
+                    accountNumber: accountNumber.value,
+                    balance: balance.value
+                })
+            });
+
+            if (!res.ok) {
+                accountMsg.innerHTML = '<span class="error">❌ Erreur création</span>';
+                return;
+            }
+
+            accountMsg.innerHTML = '<span class="success">✅ Compte créé</span>';
+            setTimeout(() => {
+                document.getElementById("accountBox").style.display = "none";
+                checkAccount();
+            }, 1000);
+        } catch (err) {
+            accountMsg.innerHTML = '<span class="error">❌ Erreur: ' + err.message + '</span>';
+        }
+    }
+
+    /* OPERATIONS */
+    function toggleDestination() {
+        destAccount.style.display = type.value === "TRANSFER" ? "block" : "none";
+    }
+
+    async function createOperation() {
+        try {
+            const res = await fetch("/api/client/operations", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: "Bearer " + token
+                },
+                body: JSON.stringify({
+                    type: type.value,
+                    amount: parseFloat(amount.value),
+                    destinationAccountNumber: destAccount.value || null
+                })
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                opMsg.innerHTML = '<span class="error">❌ ' + (error.message || 'Erreur') + '</span>';
+                return;
+            }
+
+            const result = await res.json();
+
+            // Message selon le statut
+            if (result.status === 'APPROVE') {
+                opMsg.innerHTML = '<span class="success">✅ Opération effectuée immédiatement</span>';
+            } else if (result.status === 'PENDING') {
+                opMsg.innerHTML = '<span style="color: orange;">⏳ Opération en attente de validation</span>';
+            }
+
+            // Rafraîchir le solde ET les opérations
+            setTimeout(async () => {
+                await refreshAccount();
+                await loadOperations();
+                amount.value = '';
+                destAccount.value = '';
+                opMsg.innerHTML = '';
+            }, 1500);
+
+        } catch (err) {
+            opMsg.innerHTML = '<span class="error">❌ Erreur: ' + err.message + '</span>';
+        }
+    }
+
+    async function loadOperations() {
+        try {
+            const res = await fetch("/api/client/operations", {
+                headers: { Authorization: "Bearer " + token }
+            });
+
+            const data = await res.json();
+            ops.innerHTML = data.map(op => {
+                const statusColor = op.status === 'APPROVE' ? 'green' :
+                                   op.status === 'REJECT' ? 'red' : 'orange';
+                return `<li>
+                    <b>${op.type}</b> - ${op.amount} MAD
+                    <span style="color: ${statusColor}">(${op.status})</span>
+                    ${op.amount > 10000 && op.status === 'PENDING' ? `
+                      <input type="file" onchange="uploadDoc(${op.id}, this)">
+                    ` : ""}
+                </li>`;
+            }).join("");
+        } catch (err) {
+            console.error("Erreur chargement opérations:", err);
+        }
+    }
+
+    /* UPLOAD DOCUMENT */
+    async function uploadDoc(opId, input) {
+        try {
+            const formData = new FormData();
+            formData.append("file", input.files[0]);
+
+            await fetch(`/api/client/operations/${opId}/document`, {
+                method: "POST",
+                headers: { Authorization: "Bearer " + token },
+                body: formData
+            });
+
+            alert("📎 Document envoyé");
+            loadOperations();
+        } catch (err) {
+            alert("❌ Erreur envoi document");
+        }
+    }
+
+    /* INIT */
+    checkAccount();
+    loadOperations();
+</script>
+
+</body>
+</html>

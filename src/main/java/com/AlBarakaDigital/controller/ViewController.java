@@ -21,8 +21,19 @@ public class ViewController {
         return "register";
     }
 
-    @GetMapping("/dashboard")
-    public String dashboard() {
-        return "dashboard";
+    @GetMapping("/dashboard/client")
+    public String clientDashboard() {
+        return "dashboard-client";
     }
+
+    @GetMapping("/dashboard/admin")
+    public String adminDashboard() {
+        return "dashboard-admin";
+    }
+
+    @GetMapping("/dashboard/agent")
+    public String agentDashboard() {
+        return "dashboard-agent";
+    }
+
 }

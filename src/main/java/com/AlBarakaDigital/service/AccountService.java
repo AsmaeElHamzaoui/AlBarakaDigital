@@ -21,4 +21,6 @@ public interface AccountService {
 
     // Créer un compte (request DTO + utilisateur authentifié)
     AccountResponseDTO createAccountForAuthenticatedUser(AccountRequestDTO accountRequestDTO, String userEmail);
+
+    AccountResponseDTO getAccountByClientEmail(String email);
 }
