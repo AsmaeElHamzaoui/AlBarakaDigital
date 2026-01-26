@@ -7,6 +7,7 @@ import com.AlBarakaDigital.repository.DocumentRepository;
 import com.AlBarakaDigital.repository.OperationRepository;
 import com.AlBarakaDigital.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;

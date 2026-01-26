@@ -14,4 +14,6 @@ public class AccountRequestDTO {
     private String accountNumber;
 
     private BigDecimal balance;
+
+
 }
